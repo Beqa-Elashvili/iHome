@@ -12,8 +12,23 @@ const generateToken = (userId: string) => {
 export const createUser = async (req: Request, res: Response): Promise<any> => {
   const { email, password, name, phoneNumber } = req.body;
 
-  if (!email || !password || !name || !phoneNumber) {
-    return res.status(400).json({ error: "All fields are required" });
+  const errors: { [key: string]: string } = {};
+
+  if (!email) {
+    errors.email = "Email is required";
+  }
+  if (!password) {
+    errors.password = "Password is required";
+  }
+  if (!name) {
+    errors.name = "Name is required";
+  }
+  if (!phoneNumber) {
+    errors.phoneNumber = "Phone number is required";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ errors });
   }
 
   try {
@@ -41,7 +56,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    const token = generateToken(user.id as unknown as string);
+    const token = generateToken(String(user.id));
 
     return res.status(201).json({
       id: user.id,
@@ -56,6 +71,29 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const validateUser = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  const { email, phoneNumber } = req.body;
+  try {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { phoneNumber }],
+      },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        error: "User with this email or phone number  already exists",
+      });
+    }
+  } catch (error) {
+    return res.status(200).json({ message: "User is valid" });
+  }
+};
+
 export const loginUser = async (req: Request, res: Response): Promise<any> => {
   const { email, password } = req.body;
 

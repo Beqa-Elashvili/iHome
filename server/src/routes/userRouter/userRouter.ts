@@ -4,13 +4,15 @@ import {
   loginUser,
   authenticateToken,
   getUser,
+  validateUser,
 } from "../../controllers/usersController/usersController";
 
 const router = Router();
 
 router.post("/register", createUser);
 router.post("/login", loginUser);
-router.get("/id/:email", getUser);
+router.get("/id/:id", getUser);
+router.get("/CheckEmail/:email", validateUser);
 
 router.get("/protectedRoute", authenticateToken, (req, res) => {
   res.json({

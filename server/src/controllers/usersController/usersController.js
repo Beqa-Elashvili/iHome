@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authenticateToken = exports.getUser = exports.loginUser = exports.createUser = void 0;
+exports.authenticateToken = exports.getUser = exports.loginUser = exports.validateUser = exports.createUser = void 0;
 const prisma_1 = __importDefault(require("../../lib/prisma"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -33,8 +33,21 @@ const generateToken = (userId) => {
 };
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password, name, phoneNumber } = req.body;
-    if (!email || !password || !name || !phoneNumber) {
-        return res.status(400).json({ error: "All fields are required" });
+    const errors = {};
+    if (!email) {
+        errors.email = "Email is required";
+    }
+    if (!password) {
+        errors.password = "Password is required";
+    }
+    if (!name) {
+        errors.name = "Name is required";
+    }
+    if (!phoneNumber) {
+        errors.phoneNumber = "Phone number is required";
+    }
+    if (Object.keys(errors).length > 0) {
+        return res.status(400).json({ errors });
     }
     try {
         const existingUser = yield prisma_1.default.user.findFirst({
@@ -56,7 +69,7 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 phoneNumber,
             },
         });
-        const token = generateToken(user.id);
+        const token = generateToken(String(user.id));
         return res.status(201).json({
             id: user.id,
             email: user.email,
@@ -72,6 +85,25 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.createUser = createUser;
+const validateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, phoneNumber } = req.body;
+    try {
+        const existingUser = yield prisma_1.default.user.findFirst({
+            where: {
+                OR: [{ email }, { phoneNumber }],
+            },
+        });
+        if (existingUser) {
+            return res.status(400).json({
+                error: "User with this email or phone number  already exists",
+            });
+        }
+    }
+    catch (error) {
+        return res.status(200).json({ message: "User is valid" });
+    }
+});
+exports.validateUser = validateUser;
 const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     if (!email || !password) {
