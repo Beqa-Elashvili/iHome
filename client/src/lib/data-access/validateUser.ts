@@ -3,7 +3,7 @@
 export default async function validateEmail(email: string) {
   try {
     const response = await fetch(
-      `${process.env.BASE_API_URL}/${process.env.URL_USER_EMAIL_CHECK}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/${process.env.URL_USER_EMAIL_CHECK}`,
       {
         method: "POST",
         headers: {

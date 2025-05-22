@@ -4,9 +4,7 @@ export interface UserType {
   email: string;
   id: string;
   name: string;
-  personalNumber: string;
   phoneNumber: string;
-  points: number;
 }
 
 export interface storyTypes {

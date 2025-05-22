@@ -1,42 +1,47 @@
 import axios from "axios";
-import { useAppDispatch } from "@/app/redux";
-import { setIsUser } from "@/redux/globalSlice";
+import { useAppDispatch } from "@/app/redux"; // Redux hook
+import { setIsUser } from "@/redux/globalSlice"; // Redux action to set user
 
 const useGetProtectedData = () => {
-  const url = process.env.NEXT_PUBLIC_API_BASE_URL;
   const dispatch = useAppDispatch();
 
-  const handleUser = async (userId: string) => {
-    try {
-      const resp = await axios.get(`${url}/api/users/userId/${userId}`);
-      dispatch(setIsUser(resp.data));
-    } catch (error) {
-      console.log(error);
-      dispatch(setIsUser(null));
-    }
-  };
-
   const getProtectedData = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token"); // 🔁 Get token from localStorage
+    console.log("Token from localStorage:", token);
+
     if (!token) {
-      console.log("No token found");
+      console.warn("No token found in localStorage.");
       dispatch(setIsUser(null));
       return;
     }
+
     try {
-      const response = await axios.get(`${url}/api/users/protectedRoute`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.data.user) {
-        await handleUser(response.data.user.userId);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/protectedRoute`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // 🛂 Send token in Authorization header
+          },
+        }
+      );
+
+      if (response.data?.user) {
+        console.log("User data retrieved:", response.data.user);
+        dispatch(setIsUser(response.data.user));
+      } else {
+        console.warn("No user data returned from protected route.");
+        dispatch(setIsUser(null));
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        console.warn("Unauthorized or expired token.");
+      } else {
+        console.error("Error accessing protected route:", error);
+      }
       dispatch(setIsUser(null));
-      console.error("Error fetching protected data:", error);
     }
   };
+
   return { getProtectedData };
 };
 

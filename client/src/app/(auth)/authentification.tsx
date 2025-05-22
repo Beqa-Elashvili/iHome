@@ -5,11 +5,10 @@ import { Eye, EyeOff, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsRegisterForm, setIsAuthModalOpen } from "@/redux/globalSlice";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import registerAction from "@/lib/actions/registerAction";
-import { log } from "console";
 import loginAction from "@/lib/actions/loginAction";
+import { setIsUser } from "@/redux/globalSlice";
 
 type FormValues = {
   name?: string;
@@ -36,7 +35,6 @@ function Register() {
   } = useForm<FormValues>();
   console.log("REGISTER FORM ERRORS:", errors);
 
-  const router = useRouter();
   const [state, action, isPending] = useActionState(registerAction, undefined);
   const [logInState, logAction, isLoginPending] = useActionState(
     loginAction,
@@ -51,6 +49,8 @@ function Register() {
       [field]: !prev[field],
     }));
   };
+  const { isUser } = useAppSelector((state) => state.global);
+  console.log(isUser);
 
   const toggleIsRegisterForm = (value: string) => {
     dispatch(setIsRegisterForm(value !== "LOGIN"));
@@ -60,6 +60,13 @@ function Register() {
       dispatch(setIsRegisterForm(false));
     }
   }, [state]);
+
+  useEffect(() => {
+    if (logInState?.success) {
+      dispatch(setIsUser(logInState.user));
+      localStorage.setItem("token", logInState?.token);
+    }
+  }, [logInState, dispatch]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center">

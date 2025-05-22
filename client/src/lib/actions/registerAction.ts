@@ -44,10 +44,10 @@ export default async function registerAction(
   try {
     console.log("USER REGISTRATION DATA:", userFormData);
     console.log(
-      `URl forms: = ${process.env.BASE_API_URL}${process.env.URL_USER_REGISTER}`
+      `URl forms: = ${process.env.NEXT_PUBLIC_API_BASE_URL}${process.env.URL_USER_REGISTER}`
     );
     const response = await fetch(
-      `${process.env.BASE_API_URL}${process.env.URL_USER_REGISTER}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}${process.env.URL_USER_REGISTER}`,
       {
         method: "POST",
         headers: {

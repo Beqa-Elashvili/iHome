@@ -1,5 +1,7 @@
 "use server";
 
+import { cookies } from "next/headers"; // Use Next.js' built-in cookies API
+
 /**
  * 1. get data from form
  * 2. validate data with zod
@@ -19,31 +21,14 @@ export default async function registerAction(
     password: formData.get("password") as string,
   };
 
-  // 2. validate data with zod
-
-  // // 3. check if user already exists
-  // const userValidationResult = await validateEmail(userFormData.email);
-
-  // console.log("USER VALIDATION RESULT:", userValidationResult);
-  // if (userValidationResult === true) {
-  //   return {
-  //     success: false,
-  //     message: { email: `user with ${userFormData.email} exist!` },
-  //     formData: {
-  //       email: userFormData.email,
-  //       name: userFormData.name,
-  //       phoneNumber: userFormData.phoneNumber,
-  //     },
-  //   };
-  // }
-
   try {
     console.log("USER login DATA:", userFormData);
     console.log(
-      `URl forms: = ${process.env.BASE_API_URL}${process.env.URL_USER_LOGIN}`
+      `URl forms: = ${process.env.NEXT_PUBLIC_API_BASE_URL}${process.env.URL_USER_LOGIN}`
     );
+
     const response = await fetch(
-      `${process.env.BASE_API_URL}${process.env.URL_USER_LOGIN}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}${process.env.URL_USER_LOGIN}`,
       {
         method: "POST",
         headers: {
@@ -55,10 +40,10 @@ export default async function registerAction(
 
     const responseJson = await response.json();
     console.log("RESPONSE BODY:", responseJson);
+
     if (!response.ok) {
       const fieldErrors: { [key: string]: string } = {};
 
-      // If the response contains a known error message
       if (responseJson.error) {
         return {
           success: false,
@@ -66,7 +51,6 @@ export default async function registerAction(
         };
       }
 
-      // Fallback if validation-style errors are provided
       if (responseJson.errors && typeof responseJson.errors === "object") {
         Object.entries(responseJson.errors).forEach(([field, message]) => {
           if (typeof field === "string" && typeof message === "string") {
@@ -82,9 +66,10 @@ export default async function registerAction(
         errors: fieldErrors,
       };
     }
+
     // URL_GET_USER
     const getUserResponse = await fetch(
-      `${process.env.BASE_API_URL}${
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}${
         process.env.URL_GET_USER
       }/${encodeURIComponent(responseJson.id)}`,
       {
@@ -104,20 +89,14 @@ export default async function registerAction(
       };
     }
 
-    // Parse the user data from the response
-    let user;
-    try {
-      user = await getUserResponse.json();
-    } catch (error) {
-      return {
-        success: false,
-        message: "Error parsing user data from the response.",
-      };
-    }
+    const user = await getUserResponse.json();
+    const token = await responseJson.token;
+
     return {
       success: true,
       apiMessage: "User login successfully",
       user,
+      token,
       formData: {
         email: userFormData.email,
         password: userFormData.password,
